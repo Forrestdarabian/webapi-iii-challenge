@@ -1,7 +1,7 @@
 const express = require("express");
 const User = require("./userDb");
 const router = express.Router();
-
+const Post = require("../posts/postDb");
 router.post("/", validateUser, (req, res) => {
   const { name } = req.body;
   User.insert({ name })
@@ -14,7 +14,17 @@ router.post("/", validateUser, (req, res) => {
     });
 });
 //----------------------------------------------------------------------//
-router.post("/:id/posts", (req, res) => {});
+router.post("/:id/posts", validateUserId, validatePost, (req, res) => {
+  const post = req.body;
+  Post.insert(post)
+    .then(post => {
+      res.status(201).json(post);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ error: "Error adding post" });
+    });
+});
 //----------------------------------------------------------------------//
 router.get("/", (req, res) => {
   User.get()
@@ -94,6 +104,17 @@ function validateUser(req, res, next) {
   next();
 }
 //----------------------------------------------------------------------//
-function validatePost(req, res, next) {}
+function validatePost(req, res, next) {
+  const { id: user_id } = req.params;
+  const { text } = req.body;
+  if (!req.body) {
+    return res.status(400).json({ error: "Im not sure what to write here" });
+  }
+  if (!text) {
+    return res.status(400).json({ error: "Text is required" });
+  }
+  req.body = { user_id, text };
+  next();
+}
 //----------------------------------------------------------------------//
 module.exports = router;
