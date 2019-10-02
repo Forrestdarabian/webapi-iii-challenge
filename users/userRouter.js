@@ -2,7 +2,7 @@ const express = require("express");
 const User = require("./userDb");
 const router = express.Router();
 
-router.post("/", (req, res) => {
+router.post("/", validateUser, (req, res) => {
   const { name } = req.body;
   User.insert({ name })
     .then(user => {
@@ -68,8 +68,9 @@ router.put("/:id", validateUserId, (req, res) => {
       res.status(500).json({ error: "Error updating user" });
     });
 });
-//custom middleware
 
+//custom middleware
+//----------------------------------------------------------------------//
 function validateUserId(req, res, next) {
   const { id } = req.params;
   User.getById(id).then(user => {
@@ -82,8 +83,17 @@ function validateUserId(req, res, next) {
   });
 }
 //----------------------------------------------------------------------//
-function validateUser(req, res, next) {}
-
+function validateUser(req, res, next) {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: "Name required" });
+  }
+  if (typeof name !== "string") {
+    return res.status(400).json({ error: "name must be a string" });
+  }
+  next();
+}
+//----------------------------------------------------------------------//
 function validatePost(req, res, next) {}
-
+//----------------------------------------------------------------------//
 module.exports = router;
