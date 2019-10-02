@@ -21,19 +21,36 @@ router.get("/:id", validateUserId, (req, res) => {
 });
 router.get("/:id/posts", (req, res) => {});
 
-router.delete("/:id", (req, res) => {});
-
+router.delete("/:id", validateUserId, (req, res) => {
+  const { id } = req.user;
+  User.remove(id)
+    .then(() => res.status(204).end())
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ error: "Error deleting user" });
+    });
+});
 router.put("/:id", validateUserId, (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
-  User.update(id, { name }).then(updated => {
-    res.status(200).json(updated);
-  });
+  User.update(id, { name })
+    .then(() => {
+      User.getById(id)
+        .then(user => res.status(200).json(user))
+        .catch(err => {
+          console.log(err);
+          res.status(500).json({ error: "Error getting user" });
+        });
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ error: "Error updating user" });
+    });
 });
 //custom middleware
 
 function validateUserId(req, res, next) {
-  const { id } = req.params.id;
+  const { id } = req.params;
   User.getById(id).then(user => {
     if (user) {
       req.user = user;
